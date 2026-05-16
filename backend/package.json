@@ -11,11 +11,16 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@mikro-orm/core": "^7.0.16",
+    "@mikro-orm/mysql": "^7.0.16",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "kafkajs": "^2.2.4",
     "mysql2": "^3.22.3",
+    "nodemailer": "^8.0.7",
     "redis": "^5.12.1",
     "sequelize": "^6.37.8"
   }
