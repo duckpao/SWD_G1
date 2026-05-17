@@ -1,27 +1,24 @@
 const express = require('express');
 const cors = require('cors');
-const { connectDB } = require('./config/db'); // Import hàm kết nối database
-const authRoutes = require('./routes/auth'); // Import router auth của bạn
+const { connectDB } = require('./config/db');
+const authRoutes = require('./routes/authRoute'); 
 
 const app = express();
 const PORT = 5000;
 
-// 1. Cấu hình các Middleware hệ thống (Phải đặt TRƯỚC khi định nghĩa Route)
 app.use(cors());
-app.use(express.json()); // Bắt buộc phải có để Postman gửi JSON lên Express đọc được
+app.use(express.json());
 
-// 2. Kết nối Database MySQL
+// Kết nối database MySQL Docker (Cổng 3307)
 connectDB();
 
-// 3. Đăng ký các API Routes
-app.use('/api/auth', authRoutes); // Định tuyến tất cả API liên quan đến login, register
+// Đăng ký API Routes
+app.use('/api/auth', authRoutes);
 
-// Route kiểm tra server cơ bản
 app.get('/', (req, res) => {
-    res.send('Backend Fruit Shop đang chạy ngon lành!');
+    res.send('Backend Fruit Shop tổ chức cấu hình MVC/Service-Repository thành công!');
 });
 
-// 4. Khởi chạy Server
 app.listen(PORT, () => {
-    console.log(`🚀 Server đang chạy tại cổng thành công: http://localhost:${PORT}`);
+    console.log(`🚀 Server đang chạy mượt mà tại: http://localhost:${PORT}`);
 });
