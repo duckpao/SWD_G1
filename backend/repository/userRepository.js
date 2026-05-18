@@ -22,4 +22,14 @@ const saveAdminUser = async (userData) => {
   );
 };
 
-module.exports = { checkEmailExists, saveAdminUser };
+const saveNormalUser = async (userData) => {
+  const { fullname, email, password, phone, address, role, status } = userData;
+  await sequelize.query(
+    'INSERT INTO users (fullname, email, password, phone, address, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    {
+      replacements: [fullname, email, password, phone || null, address || null, role || 'user', status || 'active']
+    }
+  );
+};
+
+module.exports = { checkEmailExists, saveAdminUser, saveNormalUser };
