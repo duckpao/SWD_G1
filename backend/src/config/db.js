@@ -4,7 +4,7 @@ const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize('fruit_shop', 'root', 'root', {
   host: 'localhost',     // Kết nối từ máy thật (Localhost) vào Docker
   dialect: 'mysql',
-  port: 3307,            // Port giao tiếp mặc định của MySQL
+  port: 3306,            // Port giao tiếp mặc định của MySQL
   logging: false,        // Tắt log câu lệnh SQL chạy ngầm để Terminal sạch hơn
   dialectOptions: {
     connectTimeout: 60000 // Chờ tối đa 60 giây khi khởi tạo kết nối

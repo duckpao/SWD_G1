@@ -1,0 +1,101 @@
+﻿@startuml
+title Architecture Diagram - Fruit Shop System
+
+!theme plain
+
+skinparam defaultFontName Arial
+skinparam componentFontSize 12
+skinparam packageFontSize 14
+skinparam packageFontStyle bold
+
+package "<<presentation-layer>>\nClient Tier" as client_tier {
+  component "React SPA\nVite + React 19 + Axios" <<web-browser>>
+}
+
+package "<<gateway>>\nAPI Gateway" as gateway_tier {
+  node "Express Server\nPort 5000" <<rest-api>>
+}
+
+package "<<application-layer>>\nServer Tier" as app_tier {
+  package "Backend" as backend {
+    component "authRoute\nPOST /register\nPOST /register-admin\nGET /activate" <<route>>
+    component "authController" <<controller>>
+    component "authService" <<service>>
+    component "userRepository" <<repository>>
+    component "User, Product, Order,\nCart, Review, ..." <<entity>>
+    component "RegisterUserRequest\nUserResponse" <<dto>>
+    component "authMiddleware\n(JWT)" <<middleware>>
+    component "db (Sequelize)\nmail (Nodemailer)" <<config>>
+
+    authRoute --> authController : <<delegate>>
+    authController --> authService : <<call>>
+    authController --> RegisterUserRequest : <<create>>
+    authService --> userRepository : <<call>>
+    authService --> User : <<use>>
+    userRepository --> User : <<use>>
+    userRepository --> db : <<use>>
+    authMiddleware --> User : <<verify>>
+    authService --> mail : <<use>>
+    authService --> db : <<use>>
+  }
+}
+
+package "<<worker>>\nWorker Tier" as worker_tier {
+  component "Order Worker\nKafka Consumer" <<background-worker>>
+}
+
+package "<<data-layer>>\nData & Messaging" as data_tier {
+  database "MySQL 8.0\nfruit_shop" <<rdbms>>
+  database "Redis 7\nCache" <<key-value>>
+  component "Kafka Broker\n+ Zookeeper" <<message-queue>>
+}
+
+package "<<external>>\nExternal Systems" as ext_tier {
+  cloud "Email Service\nGmail SMTP" <<smtp>>
+  cloud "Payment Gateway\nVNPay / Momo / PayPal" <<payment-api>>
+}
+
+' ----- dependencies -----
+React SPA ..> Express Server : HTTP / REST JSON
+
+Express Server ..> authRoute : Express Router
+
+authRoute ..> authService : <<use>>
+authService ..> mail : Nodemailer SMTP
+authService ..> Redis : activation token
+authService ..> Kafka Broker : push event (future)
+
+userRepository ..> MySQL 8.0 : SQL
+db ..> MySQL 8.0 : connect
+
+Kafka Broker ..> Order Worker : consume order-topic
+Order Worker ..> MySQL 8.0 : update stock
+Order Worker ..> Redis 7 : refresh stock cache
+
+Express Server ..> Payment Gateway : HTTP callback (future)
+
+' ----- notes -----
+note right of Express Server
+  <b>Main request flow:</b>
+  1. Browser -> Express
+  2. Route -> Controller
+  3. Controller -> Service
+  4. Service -> Repository
+  5. Repository -> MySQL
+end note
+
+note left of Order Worker
+  <b>Async flow:</b>
+  Kafka order-topic
+  -> Worker consume
+  -> Update MySQL stock
+  -> Refresh Redis cache
+end note
+
+note bottom of Kafka Broker
+  Async message queue
+  for order processing,
+  email, notification
+end note
+
+@enduml

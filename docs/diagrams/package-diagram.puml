@@ -1,0 +1,157 @@
+﻿@startuml FruitShop_Package_Diagram
+!theme plain
+
+title Package Diagram - Fruit Shop System
+
+' ===== SKIN =====
+skinparam package {
+  BorderColor #2E86C1
+  BackgroundColor #D6EAF8
+  FontColor #1B4F72
+  FontSize 13
+}
+skinparam rectangle {
+  BorderColor #2E86C1
+  BackgroundColor #D6EAF8
+}
+skinparam database {
+  BorderColor #1E8449
+  BackgroundColor #D5F5E3
+}
+skinparam node {
+  BorderColor #B03A2E
+  BackgroundColor #FADBD8
+}
+skinparam actor {
+  BorderColor #6C3483
+  BackgroundColor #E8DAEF
+}
+skinparam arrow {
+  Color #2C3E50
+}
+skinparam defaultFontName Arial
+
+' ===== LAYER STEREOTYPES =====
+rectangle "<<Presentation Layer>>\nClient Tier" as PRES_LAYER #E8DAEF
+rectangle "<<Application Layer>>\nServer Tier" as APP_LAYER #D6EAF8
+rectangle "<<Infrastructure Layer>>\nData & Messaging Tier" as INFRA_LAYER #D5F5E3
+
+' ===== 1. CLIENT TIER =====
+package "Frontend" as FRONTEND {
+  rectangle "React SPA\n(Vite + Axios)" as REACT
+}
+
+' ===== 2. SERVER TIER (Backend Node.js) =====
+package "Backend" as BACKEND {
+  package "api" as API {
+    rectangle "authRoute\n(POST /register\nPOST /register-admin\nGET /activate)" as ROUTE
+  }
+
+  package "controller" as CTRL {
+    rectangle "authController" as CONTROLLER
+  }
+
+  package "service" as SVC {
+    rectangle "authService" as SERVICE
+  }
+
+  package "repository" as REPO {
+    rectangle "userRepository" as REPOSITORY
+  }
+
+  package "entity" as ENT {
+    rectangle "User" as ENT_USER
+    rectangle "Product" as ENT_PROD
+    rectangle "Category" as ENT_CAT
+    rectangle "Order" as ENT_ORDER
+    rectangle "OrderItem" as ENT_ITEM
+    rectangle "Cart" as ENT_CART
+    rectangle "Report" as ENT_REPORT
+  }
+
+  package "dto" as DTO {
+    rectangle "RegisterUserRequest" as DTO_REQ
+    rectangle "RegisterAdminRequest" as DTO_ADMIN_REQ
+    rectangle "UserResponse" as DTO_RESP
+  }
+
+  package "middleware" as MW {
+    rectangle "authMiddleware\n(JWT protect + authorize)" as MIDDLEWARE
+  }
+
+  package "config" as CFG {
+    rectangle "db (Sequelize)" as CFG_DB
+    rectangle "mail (Nodemailer)" as CFG_MAIL
+  }
+}
+
+' ===== 3. INFRASTRUCTURE TIER =====
+package "MySQL" as MYSQL_NODE #D5F5E3 {
+  database "fruit_shop\n(3306)" as MYSQL
+}
+package "Redis" as REDIS_NODE #D5F5E3 {
+  database "Redis\n(6379)" as REDIS
+}
+package "Kafka" as KAFKA_NODE #D5F5E3 {
+  node "Kafka Broker\n(9092)" as KAFKA
+  node "Zookeeper\n(2181)" as ZK
+}
+package "Worker" as WORKER_NODE #FADBD8 {
+  rectangle "order-worker\n(Kafka consumer)" as WORKER
+}
+
+' ===== 4. EXTERNAL SERVICES =====
+package "Email Service\n(External)" as EMAIL_NODE #FDEBD0 {
+  node "Gmail SMTP" as EMAIL
+}
+package "Payment Gateway\n(External)" as PAY_NODE #FDEBD0 {
+  node "VNPay / Momo / PayPal" as PAYMENT
+}
+
+' ===== RELATIONSHIPS =====
+
+' Frontend -> Server
+FRONTEND ..> ROUTE : <<use>>\nHTTP REST
+
+' Internal layering
+ROUTE ..> CONTROLLER : <<use>>
+CONTROLLER ..> DTO_REQ : <<create>>\n<<validate>>
+CONTROLLER ..> DTO_RESP : <<use>>
+CONTROLLER ..> SERVICE : <<use>>
+
+SERVICE ..> REPOSITORY : <<use>>
+SERVICE ..> ENT_USER : <<use>>
+SERVICE ..> CFG_MAIL : <<use>>
+SERVICE ..> REDIS : <<use>>\nactivation token
+
+REPOSITORY ..> MYSQL : <<use>>\nSequelize raw SQL
+REPOSITORY ..> ENT : <<use>>\nMikro-ORM EM
+
+MIDDLEWARE ..> ENT_USER : <<use>>\nJWT verify
+
+CFG_DB ..> MYSQL : <<connect>>
+CFG_MAIL ..> EMAIL : <<use>>\nNodemailer SMTP
+
+' Kafka & Worker
+SERVICE ..> KAFKA : <<use>>\n(future)
+KAFKA ..> WORKER : <<consume>>\norder-topic
+WORKER ..> MYSQL : <<use>>\nupdate stock
+WORKER ..> REDIS : <<use>>\ncache stock
+
+' Entities relationships
+ENT_USER <.. ENT_CART : <<use>>
+ENT_USER <.. ENT_ORDER : <<use>>
+ENT_PROD <.. ENT_CART : <<use>>
+ENT_PROD <.. ENT_ITEM : <<use>>
+ENT_ORDER <.. ENT_ITEM : <<use>>
+ENT_CAT <.. ENT_PROD : <<use>>
+
+' External
+BACKEND ..> PAYMENT : <<use>>\n(future) HTTP API
+
+' ===== LEGEND =====
+legend right
+  Note: Dashed arrow = dependency
+end legend
+
+@enduml

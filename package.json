@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
- "scripts": {
-  "docker:up": "docker compose up -d",
-  "docker:down": "docker compose down",
-  "backend": "cd backend && node server.js",
-  "frontend": "cd frontend && npm run dev",
-  "full-dev": "concurrently \"npm run docker:up\" \"npm run backend\" \"npm run frontend\""
-},
+  "scripts": {
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "backend": "cd backend && node server.js && nodemon server.js",
+    "frontend": "cd frontend && npm run dev",
+    "full-dev": "concurrently \"npm run docker:up\" \"npm run backend\" \"npm run frontend\""
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/duckpao/SWD_G1.git"
@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/duckpao/SWD_G1#readme",
   "dependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.14"
   }
 }
