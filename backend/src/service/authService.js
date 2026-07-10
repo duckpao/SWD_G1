@@ -1,4 +1,4 @@
-﻿const bcrypt = require("bcryptjs");
+const bcrypt = require("bcryptjs");
 const Redis = require("redis");
 const crypto = require("crypto");
 const userRepository = require("../repository/userRepository");
@@ -12,7 +12,7 @@ const handleAdminRegistration = async (adminData) => {
 
   const isEmailExist = await userRepository.checkEmailExists(email);
   if (isEmailExist) {
-    throw new Error("Email nÃ y Ä‘Ã£ Ä‘Æ°á»£c sá»­ dá»¥ng trong há»‡ thá»‘ng!");
+    throw new Error("Email này đã được sử dụng trong hệ thống!");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -33,7 +33,7 @@ const handleUserRegistration = async (userData) => {
 
   const isEmailExist = await userRepository.checkEmailExists(email);
   if (isEmailExist) {
-    throw new Error("Email nÃ y Ä‘Ã£ Ä‘Æ°á»£c Ä‘Äƒng kÃ½ bá»Ÿi má»™t khÃ¡ch hÃ ng khÃ¡c!");
+    throw new Error("Email này đã được đăng ký bởi khách hàng khác!");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -48,11 +48,11 @@ const handleUserRegistration = async (userData) => {
     status: "inactive",
   });
 
-  // Táº¡o activation token vÃ  lÆ°u vÃ o Redis (TTL 15 phÃºt)
+  // Tạo activation token và lưu vào Redis (TTL 15 phút)
   const token = crypto.randomBytes(32).toString("hex");
   await redisClient.set(`activation:${token}`, String(newUser.id), { EX: 900 });
 
-  // Gá»­i email kÃ­ch hoáº¡t báº¥t Ä‘á»“ng bá»™ (khÃ´ng await Ä‘á»ƒ khÃ´ng cháº­m response)
+  // Gửi email kích hoạt bất đồng bộ (không await để không chậm response)
   sendActivationEmail(email, token).catch(console.error);
 
   return newUser;
@@ -61,16 +61,16 @@ const handleUserRegistration = async (userData) => {
 const handleLogin = async (email, password) => {
   const user = await userRepository.findByEmail(email);
   if (!user) {
-    throw new Error("Email khÃ´ng tá»“n táº¡i trong há»‡ thá»‘ng!");
+    throw new Error("Email không tồn tại trong hệ thống!");
   }
 
   if (user.status !== "active") {
-    throw new Error("TÃ i khoáº£n chÆ°a Ä‘Æ°á»£c kÃ­ch hoáº¡t!");
+    throw new Error("Tài khoản chưa được kích hoạt!");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new Error("Máº­t kháº©u khÃ´ng chÃ­nh xÃ¡c!");
+    throw new Error("Mật khẩu không chính xác!");
   }
 
   const jwt = require("jsonwebtoken");
@@ -96,14 +96,12 @@ const processActivation = async (token) => {
   const userId = await redisClient.get(redisKey);
 
   if (!userId) {
-    throw new Error("MÃ£ xÃ¡c thá»±c khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ háº¿t háº¡n sá»­ dá»¥ng!");
+    throw new Error("Mã xác thực không hợp lệ hoặc đã hết hạn sử dụng!");
   }
 
   const user = await userRepository.findById(userId);
   if (!user) {
-    throw new Error(
-      "TÃ i khoáº£n liÃªn káº¿t vá»›i mÃ£ xÃ¡c thá»±c nÃ y khÃ´ng tá»“n táº¡i!"
-    );
+    throw new Error("Tài khoản liên kết với mã xác thực này không tồn tại!");
   }
 
   if (user.status === "active") {

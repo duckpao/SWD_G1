@@ -23,10 +23,10 @@ const registerAdmin = async (req, res) => {
     const response = new UserResponse(newAdmin);
     return res.status(201).json(response);
   } catch (error) {
-    console.error("Lá»—i registerAdmin:", error.message);
+    console.error("Lỗi registerAdmin:", error.message);
     return res
       .status(500)
-      .json({ message: "Lá»—i há»‡ thá»‘ng", error: error.message });
+      .json({ message: "Lỗi hệ thống", error: error.message });
   }
 };
 
@@ -46,10 +46,10 @@ const registerUser = async (req, res) => {
     const response = new UserResponse(newUser);
     return res.status(201).json(response);
   } catch (error) {
-    console.error("Lá»—i registerUser:", error.message);
+    console.error("Lỗi registerUser:", error.message);
     return res
       .status(500)
-      .json({ message: "Lá»—i há»‡ thá»‘ng", error: error.message });
+      .json({ message: "Lỗi hệ thống", error: error.message });
   }
 };
 
@@ -59,17 +59,17 @@ const login = async (req, res) => {
     if (!email || !password) {
       return res
         .status(400)
-        .json({ message: "Email vÃ  máº­t kháº©u khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng!" });
+        .json({ message: "Email and password must not empty!" });
     }
 
     const result = await authService.handleLogin(email, password);
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Lá»—i login:", error.message);
-    const statusCode = error.message.includes("khÃ´ng tá»“n táº¡i") ? 404 : 401;
+    console.error("Lỗi login:", error.message);
+    const statusCode = error.message.includes("Không tồn tại") ? 404 : 401;
     return res
       .status(statusCode)
-      .json({ message: "ÄÄƒng nháº­p tháº¥t báº¡i", error: error.message });
+      .json({ message: "Đăng nhập thất bại", error: error.message });
   }
 };
 
@@ -80,21 +80,21 @@ const activateAccount = async (req, res) => {
     if (!token) {
       return res
         .status(400)
-        .json({ message: "Thiáº¿u mÃ£ xÃ¡c thá»±c (token) trÃªn Ä‘Æ°á»ng dáº«n!" });
+        .json({ message: "Thiếu token!" });
     }
 
     const result = await authService.processActivation(token);
     const response = new UserResponse(result);
 
     return res.status(200).json({
-      message: "KÃ­ch hoáº¡t tÃ i khoáº£n thÃ nh cÃ´ng!",
+      message: "Kích hoạt tài khoản thành công!",
       user: response,
     });
   } catch (error) {
-    console.error("Lá»—i activateAccount:", error.message);
-    const statusCode = error.message.includes("khÃ´ng há»£p lá»‡") ? 400 : 500;
+    console.error("Lỗi activateAccount:", error.message);
+    const statusCode = error.message.includes("không tồn tại") ? 400 : 500;
     return res.status(statusCode).json({
-      message: "KÃ­ch hoáº¡t tÃ i khoáº£n tháº¥t báº¡i",
+      message: "Kích hoạt tài khoản thành công",
       error: error.message,
     });
   }

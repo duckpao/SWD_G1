@@ -7,10 +7,10 @@
     }
 
     validate() {
-        if (!this.email) throw new Error("Email khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng!");
-        if (!this.password || this.password.length < 9) throw new Error("Máº­t kháº©u pháº£i cÃ³ Ã­t nháº¥t 9 kÃ½ tá»±!");
-        if (!this.name) throw new Error("TÃªn (name) khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng!");
-        if (!this.adminSecret) throw new Error("MÃ£ bÃ­ máº­t adminSecret khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng!");
+        if (!this.email) throw new Error("Email không được để trống!");
+        if (!this.password || this.password.length < 9) throw new Error("Mật khẩu phải có ít nhất 9 ký tự!");
+        if (!this.name) throw new Error("Tên (name) không được để trống!");
+        if (!this.adminSecret) throw new Error("Mã bí mật adminSecret không được để trống!");
         return true;
     }
 }
