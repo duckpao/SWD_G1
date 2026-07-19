@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { cart as cartApi } from "../api";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 
 export default function Cart() {
   const nav = useNavigate();
@@ -18,7 +18,7 @@ export default function Cart() {
     try { await cartApi.update(item.id, { quantity: newQty }); load(); } catch (e) { alert(e.response?.data?.message || "Lỗi"); }
   };
 
-  const remove = async (id) => { try { await cartApi.remove(id); load(); } catch (e) {} };
+  const remove = async (id) => { try { await cartApi.remove(id); load(); } catch { /* ignore */ } };
 
   const applyVoucher = async () => {
     if (!voucher) return;

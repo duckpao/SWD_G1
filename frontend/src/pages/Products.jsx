@@ -11,15 +11,27 @@ export default function Products() {
 
   useEffect(() => { products.categories().then(setCats).catch(() => {}); }, []);
   useEffect(() => {
-    setLoading(true);
-    const params = {};
-    if (q.search) params.search = q.search;
-    if (q.categoryId) params.categoryId = q.categoryId;
-    params.sortBy = q.sortBy;
-    params.sortOrder = q.sortOrder;
-    params.page = q.page;
-    params.limit = q.limit;
-    products.list(params).then(setList).catch(() => {}).finally(() => setLoading(false));
+    let ignore = false;
+    async function loadProducts() {
+      setLoading(true);
+      const params = {};
+      if (q.search) params.search = q.search;
+      if (q.categoryId) params.categoryId = q.categoryId;
+      params.sortBy = q.sortBy;
+      params.sortOrder = q.sortOrder;
+      params.page = q.page;
+      params.limit = q.limit;
+      try {
+        const items = await products.list(params);
+        if (!ignore) setList(items);
+      } catch {
+        // ignore
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    loadProducts();
+    return () => { ignore = true; };
   }, [q]);
 
   const fmt = (n) => parseInt(n).toLocaleString() + "đ";

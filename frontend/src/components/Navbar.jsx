@@ -1,5 +1,5 @@
 ﻿import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Package, User, MapPin, LogOut, LogIn, Menu, X, Store } from "lucide-react";
+import { ShoppingCart, Package, User, LogOut, LogIn, Menu, X, Store } from "lucide-react";
 import { useState } from "react";
 
 export default function Navbar() {

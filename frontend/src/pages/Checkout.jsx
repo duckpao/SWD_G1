@@ -10,19 +10,19 @@ export default function Checkout() {
   const [err, setErr] = useState("");
 
   useEffect(() => { cartApi.get().then(setCart).catch(() => {}); }, []);
-  useEffect(() => { addrApi.list().then(setAddrs).catch(() => {}); }, []);
-
-  const defaultAddr = addrs.find((a) => a.is_default);
   useEffect(() => {
-    if (defaultAddr && !form.shippingAddress) {
-      setForm((f) => ({
+    addrApi.list().then((items) => {
+      setAddrs(items);
+      const defaultAddr = items.find((a) => a.is_default);
+      if (!defaultAddr) return;
+      setForm((f) => f.shippingAddress ? f : ({
         ...f,
         recipientName: defaultAddr.recipient_name || "",
         phone: defaultAddr.phone || "",
         shippingAddress: [defaultAddr.street_address, defaultAddr.ward, defaultAddr.district, defaultAddr.city].filter(Boolean).join(", "),
       }));
-    }
-  }, [defaultAddr]);
+    }).catch(() => {});
+  }, []);
 
   const submit = async (e) => {
     e.preventDefault();

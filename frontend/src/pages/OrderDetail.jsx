@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { orders as orderApi, reviews as reviewApi } from "../api";
 import { ArrowLeft, Star, MapPin, Phone, User, CreditCard } from "lucide-react";
@@ -12,8 +12,8 @@ export default function OrderDetail() {
   const [order, setOrder] = useState(null);
   const [reviewForm, setReviewForm] = useState({ productId: "", rating: 5, title: "", comment: "" });
 
-  const load = () => orderApi.detail(id).then(setOrder).catch(() => nav("/orders"));
-  useEffect(() => { load(); }, [id]);
+  const load = useCallback(() => orderApi.detail(id).then(setOrder).catch(() => nav("/orders")), [id, nav]);
+  useEffect(() => { load(); }, [load]);
 
   const doCancel = async () => { if (confirm("Hủy đơn hàng này?")) { await orderApi.cancel(id, { reason: "Khách hủy" }); load(); } };
   const doConfirm = async () => { await orderApi.confirmDelivery(id); load(); };

@@ -11,7 +11,7 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [vid, setVid] = useState(null);
 
-  useEffect(() => { products.detail(id).then(setP).catch(() => nav("/")); }, [id]);
+  useEffect(() => { products.detail(id).then(setP).catch(() => nav("/")); }, [id, nav]);
   useEffect(() => { reviewApi.byProduct(id).then(setRevs).catch(() => {}); }, [id]);
 
   const add = async () => {
