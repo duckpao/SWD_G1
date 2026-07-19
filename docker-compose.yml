@@ -1,13 +1,14 @@
-services:
+﻿services:
   mysql-db:
     image: mysql:8.0
     ports:
-      - "3306:3306"
+      - "3307:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: fruit_shop
     volumes:
-      - ./sql:/docker-entrypoint-fruit_shopdb.d
+      - ./sql:/docker-entrypoint-initdb.d
+
   redis-cache:
     image: redis:7-alpine
     ports:

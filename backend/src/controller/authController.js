@@ -6,75 +6,83 @@ const userRepository = require("../repository/userRepository");
 
 const registerAdmin = async (req, res) => {
   try {
-    const adminRequest = new RegisterAdminRequest(req.body);
-    adminRequest.validate();
-    if (adminRequest.adminSecret !== "duckpao") {
-      return res.status(403).json({ message: "Unauthorize account, wrong admin secret!" });
-    }
-    const newAdmin = await authService.handleAdminRegistration({
-      email: adminRequest.email, password: adminRequest.password, name: adminRequest.name,
-    });
-    const response = new UserResponse(newAdmin);
-    return res.status(201).json(response);
-  } catch (error) {
-    console.error("Lỗi registerAdmin:", error.message);
-    return res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-  }
+    const r = new RegisterAdminRequest(req.body); r.validate();
+    if (r.adminSecret !== "duckpao") return res.status(403).json({ message: "Sai mã bí mật admin!" });
+    const user = await authService.handleAdminRegistration({ email: r.email, password: r.password, name: r.name });
+    return res.status(201).json(new UserResponse(user));
+  } catch (e) { console.error("Lỗi registerAdmin:", e.message); return res.status(500).json({ message: "Lỗi hệ thống" }); }
 };
 
 const registerUser = async (req, res) => {
   try {
-    const userRequest = new RegisterUserRequest(req.body);
-    userRequest.validate();
-    const newUser = await authService.handleUserRegistration({
-      email: userRequest.email, password: userRequest.password, name: userRequest.name,
-      phone: userRequest.phone, address: userRequest.address,
-    });
-    const response = new UserResponse(newUser);
-    return res.status(201).json(response);
-  } catch (error) {
-    console.error("Lỗi registerUser:", error.message);
-    return res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
-  }
+    const r = new RegisterUserRequest(req.body); r.validate();
+    const user = await authService.handleUserRegistration({ email: r.email, password: r.password, name: r.name, phone: r.phone, address: r.address });
+    return res.status(201).json(new UserResponse(user));
+  } catch (e) { console.error("Lỗi registerUser:", e.message); return res.status(500).json({ message: "Lỗi hệ thống" }); }
 };
 
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: "Email and password must not empty!" });
+    if (!email || !password) return res.status(400).json({ message: "Thiếu email hoặc mật khẩu!" });
     const result = await authService.handleLogin(email, password);
-    return res.status(200).json(result);
-  } catch (error) {
-    console.error("Lỗi login:", error.message);
-    const statusCode = error.message.includes("Không tồn tại") ? 404 : 401;
-    return res.status(statusCode).json({ message: "Đăng nhập thất bại", error: error.message });
-  }
+    return res.json(result);
+  } catch (e) { console.error("Lỗi login:", e.message); return res.status(401).json({ message: "Đăng nhập thất bại", error: e.message }); }
 };
 
 const getProfile = async (req, res) => {
   try {
     const user = await userRepository.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "Người dùng không tồn tại!" });
-    const response = new UserResponse(user);
-    return res.json(response);
-  } catch (error) {
-    console.error("Lỗi getProfile:", error.message);
-    return res.status(500).json({ message: "Lỗi lấy thông tin người dùng" });
-  }
+    return res.json(new UserResponse(user));
+  } catch (e) { console.error("Lỗi getProfile:", e.message); return res.status(500).json({ message: "Lỗi lấy thông tin" }); }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const allowed = ["fullname", "phone", "address", "avatar_url", "date_of_birth"];
+    const data = {};
+    for (const k of allowed) { if (req.body[k] !== undefined) data[k] = req.body[k]; }
+    if (Object.keys(data).length === 0) return res.status(400).json({ message: "Không có dữ liệu cập nhật!" });
+    await userRepository.updateProfile(req.user.id, data);
+    const user = await userRepository.findById(req.user.id);
+    return res.json(new UserResponse(user));
+  } catch (e) { console.error("Lỗi updateProfile:", e.message); return res.status(500).json({ message: "Lỗi cập nhật" }); }
+};
+
+const logout = async (req, res) => {
+  try {
+    // JWT stateless - client xoa token la duoc
+    return res.json({ message: "Đăng xuất thành công!" });
+  } catch (e) { return res.status(500).json({ message: "Lỗi đăng xuất" }); }
+};
+
+const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Thiếu email!" });
+    await authService.requestPasswordReset(email);
+    return res.json({ message: "Nếu email tồn tại, link đặt lại mật khẩu đã được gửi!" });
+  } catch (e) { console.error("Lỗi requestPasswordReset:", e.message); return res.json({ message: "Nếu email tồn tại, link đặt lại mật khẩu đã được gửi!" }); }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ message: "Thiếu token hoặc mật khẩu mới!" });
+    if (password.length < 6) return res.status(400).json({ message: "Mật khẩu phải có ít nhất 6 ký tự!" });
+    await authService.resetPassword(token, password);
+    return res.json({ message: "Đặt lại mật khẩu thành công!" });
+  } catch (e) { console.error("Lỗi resetPassword:", e.message); return res.status(400).json({ message: e.message }); }
 };
 
 const activateAccount = async (req, res) => {
   try {
     const { token } = req.query;
     if (!token) return res.status(400).json({ message: "Thiếu token!" });
-    const result = await authService.processActivation(token);
-    const response = new UserResponse(result);
-    return res.status(200).json({ message: "Kích hoạt tài khoản thành công!", user: response });
-  } catch (error) {
-    console.error("Lỗi activateAccount:", error.message);
-    const statusCode = error.message.includes("không tồn tại") ? 400 : 500;
-    return res.status(statusCode).json({ message: "Kích hoạt thất bại", error: error.message });
-  }
+    const user = await authService.processActivation(token);
+    return res.json({ message: "Kích hoạt tài khoản thành công!", user: new UserResponse(user) });
+  } catch (e) { return res.status(400).json({ message: "Kích hoạt thất bại", error: e.message }); }
 };
 
-module.exports = { registerAdmin, registerUser, login, getProfile, activateAccount };
+module.exports = { registerAdmin, registerUser, login, getProfile, updateProfile, logout, requestPasswordReset, resetPassword, activateAccount };
