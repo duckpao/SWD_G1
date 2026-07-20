@@ -1,4 +1,4 @@
-﻿const { sequelize } = require("../config/db");
+const { sequelize } = require("../config/db");
 
 // ===== SHOP =====
 const findByOwnerId = async (ownerId) => {
@@ -48,7 +48,7 @@ const assignShipper = async (orderId, shipperId, shopId) => {
   const [shops] = await sequelize.query("SELECT address, city, district FROM shops WHERE id = ?", { replacements: [shopId] });
   const shop = shops[0];
   // Create delivery record
-  const pickAddr = [shop?.address, shop?.district, shop?.city].filter(Boolean).join(", ") || "Địa chỉ shop";
+  const pickAddr = [shop?.address, shop?.district, shop?.city].filter(Boolean).join(", ") || "�?a ch? shop";
   await sequelize.query("INSERT INTO deliveries (order_id, shipper_id, pickup_address, delivery_address, recipient_name, recipient_phone, shipping_status, assigned_at) VALUES (?, ?, ?, ?, ?, ?, 'assigned', NOW())", {
     replacements: [orderId, shipperId, pickAddr, order.shipping_address, order.recipient_name, order.phone]
   });
@@ -72,4 +72,17 @@ const getSalesData = async (shopId) => {
   return rows;
 };
 
-module.exports = { findByOwnerId, findByShopId, createProduct, updateProduct, deleteProduct, findOrdersByShop, assignShipper, listShippers, getInventory, getSalesData };
+// ===== REVIEWS =====
+const getReviewsByShop = async (shopId) => {
+  const [rows] = await sequelize.query(`
+    SELECT r.*, u.fullname as user_name, p.name as product_name
+    FROM reviews r
+    JOIN products p ON r.product_id = p.id
+    JOIN users u ON r.user_id = u.id
+    WHERE p.shop_id = ?
+    ORDER BY r.created_at DESC
+  `, { replacements: [shopId] });
+  return rows;
+};
+
+module.exports = { findByOwnerId, findByShopId, createProduct, updateProduct, deleteProduct, findOrdersByShop, assignShipper, listShippers, getInventory, getSalesData, getReviewsByShop };

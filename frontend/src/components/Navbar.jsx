@@ -32,7 +32,7 @@ export default function Navbar() {
           {!user && <Link to="/" style={activeLink("/")}><Package size={18} /> Products</Link>}
           {user?.role === "admin" && <Link to="/admin" style={activeLink("/admin")}><Shield size={18} /> Admin</Link>}
           {user?.role === "shopowner" && <Link to="/shop" style={activeLink("/shop")}><Store size={18} /> Quản lý</Link>}
-          {user?.role === "Người giao" && <Link to="/shipper" style={activeLink("/shipper")}><Truck size={18} /> Giao hàng</Link>}
+          {user?.role === "shipper" && <Link to="/shipper" style={activeLink("/shipper")}><Truck size={18} /> Giao hàng</Link>}
           {user && (
             <>
               {user.role === "user" && <Link to="/cart" style={activeLink("/cart")}><ShoppingCart size={18} /> Cart</Link>}

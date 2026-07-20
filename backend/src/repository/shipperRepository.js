@@ -1,7 +1,7 @@
 ﻿const { sequelize } = require("../config/db");
 
 const findDeliveriesByShipper = async (shipperId) => {
-  const [rows] = await sequelize.query("SELECT d.*, o.user_id, o.final_amount, o.shipping_address, o.phone, o.recipient_name, o.status as order_status, u.fullname as customer_name FROM deliveries d JOIN orders o ON d.order_id = o.id JOIN users u ON o.user_id = u.id WHERE d.shipper_id = ? ORDER BY d.assigned_at DESC", { replacements: [shipperId] });
+  const [rows] = await sequelize.query("SELECT d.*, o.user_id, o.final_amount, o.shipping_address, o.phone, o.recipient_name, o.status as order_status, o.payment_method, o.payment_status, u.fullname as customer_name FROM deliveries d JOIN orders o ON d.order_id = o.id JOIN users u ON o.user_id = u.id WHERE d.shipper_id = ? ORDER BY d.assigned_at DESC", { replacements: [shipperId] });
   return rows;
 };
 

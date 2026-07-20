@@ -15,7 +15,8 @@ export default function Login() {
       localStorage.setItem("token", res.token);
       localStorage.setItem("user", JSON.stringify(res.user));
       if (form.rememberMe) localStorage.setItem("remember", "true");
-      nav(res.user.role === "admin" ? "/admin" : "/");
+            const roleHome = { admin: "/admin", shipper: "/shipper", shopowner: "/shop" };
+      nav(roleHome[res.user.role] || "/");
     } catch (e) {
       setErr(e.response?.data?.error || e.response?.data?.message || "Đăng nhập thất bại");
     }
