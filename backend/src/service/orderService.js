@@ -2,23 +2,20 @@
 const cartRepository = require("../repository/cartRepository");
 const productRepository = require("../repository/productRepository");
 const voucherRepository = require("../repository/voucherRepository");
-const deliveryRepository = require("../repository/deliveryRepository");
 
 const createOrder = async (userId, { shippingAddress, phone, recipientName, paymentMethod, note, voucherCode, items }) => {
   if (!shippingAddress || !phone || !recipientName) throw new Error("Vui lòng điền đầy đủ thông tin giao hàng!");
   if (!paymentMethod) throw new Error("Vui lòng chọn phương thức thanh toán!");
 
   let cartItems;
-  if (items && items.length > 0) {
-    cartItems = items;
-  } else {
+  if (items && items.length > 0) { cartItems = items; }
+  else {
     const cart = await cartRepository.findByUser(userId);
     if (!cart.length) throw new Error("Giỏ hàng trống!");
     cartItems = cart;
   }
 
-  let subtotal = 0;
-  let shopId = null;
+  let subtotal = 0, shopId = null;
   const orderItems = [];
 
   for (const item of cartItems) {
@@ -28,61 +25,40 @@ const createOrder = async (userId, { shippingAddress, phone, recipientName, paym
     if (product.stock_quantity < item.quantity) throw new Error("Sản phẩm " + product.name + " không đủ hàng!");
 
     const price = item.variant_price || item.base_price || product.base_price;
-    const variantName = item.variant_name || null;
     const lineTotal = price * item.quantity;
     subtotal += lineTotal;
     if (!shopId) shopId = product.shop_id;
 
     orderItems.push({
-      product_id: product.id,
-      variant_id: item.variant_id || null,
-      product_name: product.name,
-      variant_name: variantName,
-      quantity: item.quantity,
-      unit_price: price,
-      subtotal: lineTotal,
+      product_id: product.id, variant_id: item.variant_id || null,
+      product_name: product.name, variant_name: item.variant_name || null,
+      quantity: item.quantity, unit_price: price, subtotal: lineTotal,
     });
   }
 
   const shippingFee = subtotal >= 200000 ? 0 : 15000;
-  let discountAmount = 0;
-  let voucherId = null;
+  let discountAmount = 0, voucherId = null;
 
   if (voucherCode) {
     const voucher = await voucherRepository.findByCode(voucherCode);
     if (!voucher) throw new Error("Mã giảm giá không hợp lệ!");
     if (subtotal < voucher.min_order_amount) throw new Error("Đơn hàng chưa đạt giá trị tối thiểu!");
-    if (voucher.type === "percentage") {
-      discountAmount = Math.round(subtotal * voucher.value / 100);
-      if (voucher.max_discount && discountAmount > voucher.max_discount) discountAmount = voucher.max_discount;
-    } else {
-      discountAmount = voucher.value;
-    }
+    discountAmount = voucher.type === "percentage"
+      ? Math.min(Math.round(subtotal * voucher.value / 100), voucher.max_discount || Infinity)
+      : voucher.value;
     voucherId = voucher.id;
   }
 
   const finalAmount = subtotal - discountAmount + shippingFee;
-
-  // COD => pending payment, auto-assign shipper
-  // VNPay/VietQR => chua thanh toan, cho nguoi dung QR xong moi confirm
-  const isCOD = paymentMethod === "COD";
-  const paymentStatus = isCOD ? "pending" : "pending";
-  const orderStatus = isCOD ? "confirmed" : "confirmed";
+  const isPaid = paymentMethod !== "COD";
 
   const orderId = await orderRepository.create({
-    user_id: userId,
-    shop_id: shopId,
-    total_amount: subtotal,
-    discount_amount: discountAmount,
-    shipping_fee: shippingFee,
-    final_amount: finalAmount,
-    payment_method: paymentMethod,
-    payment_status: paymentStatus,
-    shipping_address: shippingAddress,
-    phone: phone,
-    recipient_name: recipientName,
-    status: orderStatus,
-    note: note || null,
+    user_id: userId, shop_id: shopId,
+    total_amount: subtotal, discount_amount: discountAmount, shipping_fee: shippingFee,
+    final_amount: finalAmount, payment_method: paymentMethod,
+    payment_status: isPaid ? "paid" : "pending",
+    shipping_address: shippingAddress, phone: phone, recipient_name: recipientName,
+    status: "confirmed", note: note || null,
   });
 
   for (const item of orderItems) {
@@ -90,25 +66,10 @@ const createOrder = async (userId, { shippingAddress, phone, recipientName, paym
     await productRepository.updateStock(item.product_id, item.quantity);
   }
 
-  await orderRepository.createStatusHistory(orderId, null, orderStatus, userId, "Đặt hàng thành công");
+  await orderRepository.createStatusHistory(orderId, null, "confirmed", userId, "Đặt hàng thành công");
 
-  if (isCOD) {
-    // COD: auto-assign shipper ngay
-    try {
-      const shipper = await deliveryRepository.updateOrderAndAssignShipper(orderId);
-      await orderRepository.createStatusHistory(orderId, "confirmed", "shipping", shipper.id, "Giao cho shipper " + shipper.fullname);
-    } catch (e) {
-      console.error("Không thể gán shipper:", e.message);
-    }
-  }
-  // VNPay/VietQR: chờ user thanh toán xong ở màn QR mới trigger assign
-
-  if (voucherId) {
-    await voucherRepository.incrementUsed(voucherId);
-  }
-
+  if (voucherId) await voucherRepository.incrementUsed(voucherId);
   await cartRepository.clearCart(userId);
-
   return orderId;
 };
 
@@ -126,7 +87,7 @@ const getOrderDetail = async (orderId, userId) => {
 const cancelOrder = async (orderId, userId, reason) => {
   const order = await orderRepository.findById(orderId, userId);
   if (!order) throw new Error("Đơn hàng không tồn tại!");
-  if (order.status !== "pending" && order.status !== "confirmed") throw new Error("Không thể hủy đơn hàng ở trạng thái " + order.status + "!");
+  if (order.status !== "confirmed" && order.status !== "pending" && order.status !== "shipping") throw new Error("Không thể hủy đơn hàng ở trạng thái " + order.status + "!");
   await orderRepository.updateStatus(orderId, "cancelled", "cancelled_at");
   await orderRepository.createStatusHistory(orderId, order.status, "cancelled", userId, reason || "Khách hủy");
 };
