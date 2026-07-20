@@ -15,7 +15,8 @@ const create = async (data) => {
     await sequelize.query("UPDATE user_addresses SET is_default = FALSE WHERE user_id = ?", { replacements: [data.user_id] });
   }
   const [result] = await sequelize.query("INSERT INTO user_addresses (user_id, recipient_name, phone, street_address, ward, district, city, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", { replacements: [data.user_id, data.recipient_name, data.phone, data.street_address, data.ward, data.district, data.city, data.is_default ? 1 : 0] });
-  return result;
+  const id = typeof result === "number" ? result : result.insertId;
+  return await findById(id, data.user_id);
 };
 
 const update = async (id, userId, data) => {

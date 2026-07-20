@@ -10,6 +10,10 @@ import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
 import Profile from "./pages/Profile";
 import Addresses from "./pages/Addresses";
+import Admin from "./pages/Admin";
+import ShopOwner from "./pages/ShopOwner";
+import Shipper from "./pages/Shipper";
+import QrPayment from "./pages/QrPayment";
 
 function Protected({ children }) {
   return localStorage.getItem("token") ? children : <Navigate to="/login" />;
@@ -31,6 +35,10 @@ export default function App() {
           <Route path="/orders/:id" element={<Protected><OrderDetail /></Protected>} />
           <Route path="/profile" element={<Protected><Profile /></Protected>} />
           <Route path="/addresses" element={<Protected><Addresses /></Protected>} />
+          <Route path="/admin" element={<Protected><Admin /></Protected>} />
+          <Route path="/shop" element={<Protected><ShopOwner /></Protected>} />
+          <Route path="/shipper" element={<Protected><Shipper /></Protected>} />
+          <Route path="/payment/qr/:orderId" element={<Protected><QrPayment /></Protected>} />
         </Routes>
       </main>
     </BrowserRouter>

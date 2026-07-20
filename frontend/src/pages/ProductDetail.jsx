@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { products, cart as cartApi, reviews as reviewApi } from "../api";
+import { getProductImage } from "../assets/images";
 import { ShoppingCart, Star, ArrowLeft } from "lucide-react";
 
 export default function ProductDetail() {
@@ -11,7 +12,7 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [vid, setVid] = useState(null);
 
-  useEffect(() => { products.detail(id).then(setP).catch(() => nav("/")); }, [id]);
+  useEffect(() => { products.detail(id).then(setP).catch(() => nav("/")); }, [id, nav]);
   useEffect(() => { reviewApi.byProduct(id).then(setRevs).catch(() => {}); }, [id]);
 
   const add = async () => {
@@ -26,7 +27,8 @@ export default function ProductDetail() {
     <div>
       <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: "#666", marginBottom: 16 }}><ArrowLeft size={18} /> Quay lại</button>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
-        <div style={{ height: 360, background: "#f0f0f0", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 80 }}>🍎</div>
+        <div style={{ height: 360, background: "#f0f0f0", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          {(() => { const img = getProductImage(p); return img ? <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 80 }}>🍎</span>; })()}</div>
         <div>
           <h1>{p.name}</h1>
           <p style={{ color: "#666" }}>{p.origin} • {p.unit}</p>

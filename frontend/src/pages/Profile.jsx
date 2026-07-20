@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { auth, addresses as addrApi } from "../api";
-import { User, MapPin, Package, ChevronRight, LogOut } from "lucide-react";
+import { auth } from "../api";
+import { MapPin, Package, ChevronRight, LogOut } from "lucide-react";
 
 export default function Profile() {
   const nav = useNavigate();
@@ -14,7 +14,7 @@ export default function Profile() {
 
   const save = async (e) => {
     e.preventDefault();
-    try { const r = await auth.updateProfile(form); setProfile(r); setEditing(false); const u = JSON.parse(localStorage.getItem("user") || "{}"); localStorage.setItem("user", JSON.stringify({ ...u, fullname: r.fullname })); } catch (e) { alert("Lỗi cập nhật"); }
+    try { const r = await auth.updateProfile(form); setProfile(r); setEditing(false); const u = JSON.parse(localStorage.getItem("user") || "{}"); localStorage.setItem("user", JSON.stringify({ ...u, fullname: r.fullname })); } catch { alert("Lỗi cập nhật"); }
   };
 
   const doLogout = () => { localStorage.removeItem("token"); localStorage.removeItem("user"); nav("/login"); };

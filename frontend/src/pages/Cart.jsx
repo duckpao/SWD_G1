@@ -1,7 +1,8 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { cart as cartApi } from "../api";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from "lucide-react";
+import { getProductImage } from "../assets/images";
+import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 
 export default function Cart() {
   const nav = useNavigate();
@@ -18,7 +19,7 @@ export default function Cart() {
     try { await cartApi.update(item.id, { quantity: newQty }); load(); } catch (e) { alert(e.response?.data?.message || "Lỗi"); }
   };
 
-  const remove = async (id) => { try { await cartApi.remove(id); load(); } catch (e) {} };
+  const remove = async (id) => { try { await cartApi.remove(id); load(); } catch { /* ignore */ } };
 
   const applyVoucher = async () => {
     if (!voucher) return;
@@ -43,7 +44,8 @@ export default function Cart() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {data.items.map((item) => (
               <div key={item.id} style={{ display: "flex", gap: 16, padding: 16, background: "#fff", borderRadius: 12, border: "1px solid #eee", alignItems: "center" }}>
-                <div style={{ width: 64, height: 64, background: "#f0f0f0", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>🍎</div>
+                <div style={{ width: 64, height: 64, background: "#f0f0f0", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+              {(() => { const img = getProductImage({ name: item.product_name, image_url: item.image_url }); return img ? <img src={img} alt={item.product_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 28 }}>🍎</span>; })()}</div>
                 <div style={{ flex: 1 }}>
                   <Link to={"/products/" + item.product_id} style={{ fontWeight: 600, textDecoration: "none", color: "#333" }}>{item.product_name}</Link>
                   {item.variant_name && <span style={{ color: "#666", fontSize: 13, display: "block" }}>{item.variant_name}</span>}
@@ -64,7 +66,7 @@ export default function Cart() {
             <h3 style={{ margin: "0 0 16px" }}>Tổng cộng</h3>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span>Tạm tính</span><span>{data.subtotal.toLocaleString()}đ</span></div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span>Giảm giá</span><span style={{ color: "#e65100" }}>-{discount.toLocaleString()}đ</span></div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}><span>Phí ship</span><span>{shipping === 0 ? "FREE" : shipping.toLocaleString() + "đ"}</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}><span>Phí ship</span><span>{shipping === 0 ? "Miễn phí" : shipping.toLocaleString() + "đ"}</span></div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18, fontWeight: "bold", marginBottom: 16 }}><span>Thành tiền</span><span style={{ color: "#2e7d32" }}>{total.toLocaleString()}đ</span></div>
 
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>

@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { products } from "../api";
+import { getProductImage } from "../assets/images";
 import { Search, Star } from "lucide-react";
 
 export default function Products() {
@@ -11,15 +12,27 @@ export default function Products() {
 
   useEffect(() => { products.categories().then(setCats).catch(() => {}); }, []);
   useEffect(() => {
-    setLoading(true);
-    const params = {};
-    if (q.search) params.search = q.search;
-    if (q.categoryId) params.categoryId = q.categoryId;
-    params.sortBy = q.sortBy;
-    params.sortOrder = q.sortOrder;
-    params.page = q.page;
-    params.limit = q.limit;
-    products.list(params).then(setList).catch(() => {}).finally(() => setLoading(false));
+    let ignore = false;
+    async function loadProducts() {
+      setLoading(true);
+      const params = {};
+      if (q.search) params.search = q.search;
+      if (q.categoryId) params.categoryId = q.categoryId;
+      params.sortBy = q.sortBy;
+      params.sortOrder = q.sortOrder;
+      params.page = q.page;
+      params.limit = q.limit;
+      try {
+        const items = await products.list(params);
+        if (!ignore) setList(items);
+      } catch {
+        // ignore
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    loadProducts();
+    return () => { ignore = true; };
   }, [q]);
 
   const fmt = (n) => parseInt(n).toLocaleString() + "đ";
@@ -55,7 +68,8 @@ export default function Products() {
             <Link to={"/products/" + p.id} key={p.id} style={{ textDecoration: "none", color: "inherit", background: "#fff", borderRadius: 12, border: "1px solid #eee", overflow: "hidden", transition: "box-shadow .2s" }}
               onMouseOver={(e) => e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,.1)"}
               onMouseOut={(e) => e.currentTarget.style.boxShadow = "none"}>
-              <div style={{ height: 160, background: "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>🍎</div>
+              <div style={{ height: 160, background: "#f0f0f0", borderRadius: "12px 12px 0 0", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              {(() => { const img = getProductImage(p); return img ? <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 48 }}>🍎</span>; })()}</div>
               <div style={{ padding: 12 }}>
                 <h3 style={{ margin: 0, fontSize: 16 }}>{p.name}</h3>
                 <p style={{ color: "#666", fontSize: 13, margin: "4px 0" }}>{p.origin}</p>
