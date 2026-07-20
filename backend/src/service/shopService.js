@@ -3,7 +3,7 @@ const orderRepository = require("../repository/orderRepository");
 
 const getMyShop = async (ownerId) => {
   const shop = await shopRepository.findByOwnerId(ownerId);
-  if (!shop) throw new Error("Bạn chưa có cửa hàng!");
+  if (!shop) throw new Error("B?n chua c� c?a h�ng!");
   return shop;
 };
 const getProducts = async (ownerId) => {
@@ -11,7 +11,7 @@ const getProducts = async (ownerId) => {
 };
 const addProduct = async (ownerId, data) => {
   const shop = await getMyShop(ownerId);
-  if (!data.name || !data.base_price) throw new Error("Thiếu tên sản phẩm hoặc giá!");
+  if (!data.name || !data.base_price) throw new Error("Thi?u t�n s?n ph?m ho?c gi�!");
   return await shopRepository.createProduct({ ...data, shop_id: shop.id });
 };
 const editProduct = async (ownerId, productId, data) => {
@@ -25,20 +25,20 @@ const getOrders = async (ownerId) => {
 };
 const assignShipper = async (ownerId, orderId, shipperId) => {
   const shop = await getMyShop(ownerId);
-  if (!shipperId) throw new Error("Chưa chọn shipper!");
+  if (!shipperId) throw new Error("Chua ch?n shipper!");
   const order = await orderRepository.findById(orderId, null);
-  if (!order || order.shop_id !== shop.id) throw new Error("Đơn hàng không thuộc cửa hàng của bạn!");
-  if (order.status !== "confirmed") throw new Error("Đơn hàng chưa được xác nhận!");
+  if (!order || order.shop_id !== shop.id) throw new Error("�on h�ng kh�ng thu?c c?a h�ng c?a b?n!");
+  if (order.status !== "confirmed") throw new Error("�on h�ng chua du?c x�c nh?n!");
   await shopRepository.assignShipper(orderId, shipperId, shop.id);
   await orderRepository.createStatusHistory(orderId, "confirmed", "shipping", ownerId, "Giao cho shipper #" + shipperId);
 };
 const cancelOrder = async (ownerId, orderId, reason) => {
   const shop = await getMyShop(ownerId);
   const order = await orderRepository.findById(orderId, null);
-  if (!order || order.shop_id !== shop.id) throw new Error("Đơn hàng không thuộc cửa hàng của bạn!");
-  if (order.status !== "confirmed" && order.status !== "shipping") throw new Error("Không thể hủy đơn hàng này!");
+  if (!order || order.shop_id !== shop.id) throw new Error("�on h�ng kh�ng thu?c c?a h�ng c?a b?n!");
+  if (order.status !== "pending" && order.status !== "confirmed" && order.status !== "shipping") throw new Error("Kh�ng th? h?y don h�ng n�y!");
   await orderRepository.updateStatus(orderId, "cancelled", "cancelled_at");
-  await orderRepository.createStatusHistory(orderId, order.status, "cancelled", ownerId, reason || "Shop hủy");
+  await orderRepository.createStatusHistory(orderId, order.status, "cancelled", ownerId, reason || "Shop h?y");
 };
 const getShippers = async () => {
   return await shopRepository.listShippers();
@@ -50,4 +50,8 @@ const getSales = async (ownerId) => {
   return await shopRepository.getSalesData((await getMyShop(ownerId)).id);
 };
 
-module.exports = { getMyShop, getProducts, addProduct, editProduct, removeProduct, getOrders, assignShipper, cancelOrder, getShippers, getInventory, getSales };
+const getReviews = async (ownerId) => {
+  return await shopRepository.getReviewsByShop((await getMyShop(ownerId)).id);
+};
+
+module.exports = { getMyShop, getProducts, addProduct, editProduct, removeProduct, getOrders, assignShipper, cancelOrder, getShippers, getInventory, getSales, getReviews };

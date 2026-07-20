@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const router = express.Router();
 const ctrl = require("../controller/shopController");
 const { protect, authorize } = require("../middleware/authMiddleware");
@@ -16,5 +16,6 @@ router.put("/orders/:id/cancel", ctrl.cancelOrder);
 router.get("/shippers", ctrl.getShippers);
 router.get("/inventory", ctrl.getInventory);
 router.get("/sales", ctrl.getSales);
+router.get("/reviews", ctrl.getReviews);
 
 module.exports = router;
