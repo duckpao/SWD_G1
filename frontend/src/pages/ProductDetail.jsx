@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { products, cart as cartApi, reviews as reviewApi } from "../api";
+import { getProductImage } from "../assets/images";
 import { ShoppingCart, Star, ArrowLeft } from "lucide-react";
 
 export default function ProductDetail() {

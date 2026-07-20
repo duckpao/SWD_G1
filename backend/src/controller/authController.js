@@ -23,9 +23,9 @@ const registerUser = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
     if (!email || !password) return res.status(400).json({ message: "Thiếu email hoặc mật khẩu!" });
-    const result = await authService.handleLogin(email, password);
+    const result = await authService.handleLogin(email, password, rememberMe);
     return res.json(result);
   } catch (e) { console.error("Lỗi login:", e.message); return res.status(401).json({ message: "Đăng nhập thất bại", error: e.message }); }
 };
@@ -51,10 +51,7 @@ const updateProfile = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-  try {
-    // JWT stateless - client xoa token la duoc
-    return res.json({ message: "Đăng xuất thành công!" });
-  } catch (e) { return res.status(500).json({ message: "Lỗi đăng xuất" }); }
+  try { return res.json({ message: "Đăng xuất thành công!" }); } catch (e) { return res.status(500).json({ message: "Lỗi đăng xuất" }); }
 };
 
 const requestPasswordReset = async (req, res) => {
@@ -63,7 +60,7 @@ const requestPasswordReset = async (req, res) => {
     if (!email) return res.status(400).json({ message: "Thiếu email!" });
     await authService.requestPasswordReset(email);
     return res.json({ message: "Nếu email tồn tại, link đặt lại mật khẩu đã được gửi!" });
-  } catch (e) { console.error("Lỗi requestPasswordReset:", e.message); return res.json({ message: "Nếu email tồn tại, link đặt lại mật khẩu đã được gửi!" }); }
+  } catch (e) { return res.json({ message: "Nếu email tồn tại, link đặt lại mật khẩu đã được gửi!" }); }
 };
 
 const resetPassword = async (req, res) => {
@@ -73,7 +70,7 @@ const resetPassword = async (req, res) => {
     if (password.length < 6) return res.status(400).json({ message: "Mật khẩu phải có ít nhất 6 ký tự!" });
     await authService.resetPassword(token, password);
     return res.json({ message: "Đặt lại mật khẩu thành công!" });
-  } catch (e) { console.error("Lỗi resetPassword:", e.message); return res.status(400).json({ message: e.message }); }
+  } catch (e) { return res.status(400).json({ message: e.message }); }
 };
 
 const activateAccount = async (req, res) => {

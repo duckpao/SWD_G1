@@ -5,7 +5,7 @@ import { LogIn } from "lucide-react";
 
 export default function Login() {
   const nav = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", rememberMe: false });
   const [err, setErr] = useState("");
 
   const submit = async (e) => {
@@ -14,7 +14,8 @@ export default function Login() {
       const res = await auth.login(form);
       localStorage.setItem("token", res.token);
       localStorage.setItem("user", JSON.stringify(res.user));
-      nav("/");
+      if (form.rememberMe) localStorage.setItem("remember", "true");
+      nav(res.user.role === "admin" ? "/admin" : "/");
     } catch (e) {
       setErr(e.response?.data?.error || e.response?.data?.message || "Đăng nhập thất bại");
     }
@@ -27,6 +28,10 @@ export default function Login() {
       <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <input placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={inputS} required />
         <input type="password" placeholder="Mật khẩu" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} style={inputS} required />
+        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: "#555", fontSize: 14 }}>
+          <input type="checkbox" checked={form.rememberMe} onChange={(e) => setForm({ ...form, rememberMe: e.target.checked })} style={{ width: 18, height: 18, cursor: "pointer" }} />
+          Giữ tôi đăng nhập
+        </label>
         <button style={btnS}>Đăng nhập</button>
         <p style={{ textAlign: "center", color: "#666" }}>
           Chưa có tài khoản? <Link to="/register" style={{ color: "#2e7d32" }}>Đăng ký</Link>

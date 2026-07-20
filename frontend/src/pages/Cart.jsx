@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { cart as cartApi } from "../api";
+import { getProductImage } from "../assets/images";
 import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 
 export default function Cart() {
@@ -64,7 +65,7 @@ export default function Cart() {
             <h3 style={{ margin: "0 0 16px" }}>Tổng cộng</h3>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span>Tạm tính</span><span>{data.subtotal.toLocaleString()}đ</span></div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span>Giảm giá</span><span style={{ color: "#e65100" }}>-{discount.toLocaleString()}đ</span></div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}><span>Phí ship</span><span>{shipping === 0 ? "FREE" : shipping.toLocaleString() + "đ"}</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}><span>Phí ship</span><span>{shipping === 0 ? "Miễn phí" : shipping.toLocaleString() + "đ"}</span></div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18, fontWeight: "bold", marginBottom: 16 }}><span>Thành tiền</span><span style={{ color: "#2e7d32" }}>{total.toLocaleString()}đ</span></div>
 
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>

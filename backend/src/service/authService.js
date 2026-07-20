@@ -23,23 +23,23 @@ const handleUserRegistration = async (data) => {
   return user;
 };
 
-const handleLogin = async (email, password) => {
+const handleLogin = async (email, password, rememberMe) => {
   const user = await userRepository.findByEmail(email);
   if (!user) throw new Error("Email không tồn tại!");
   if (user.status !== "active") throw new Error("Tài khoản chưa được kích hoạt!");
   if (!(await bcrypt.compare(password, user.password))) throw new Error("Mật khẩu không chính xác!");
   const jwt = require("jsonwebtoken");
-  const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || "my_super_secret_fruit_shop_key", { expiresIn: "7d" });
+  const expiresIn = rememberMe ? "30d" : "7d";
+  const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || "my_super_secret_fruit_shop_key", { expiresIn });
   return { token, user: { id: user.id, fullname: user.fullname, email: user.email, role: user.role } };
 };
 
 const requestPasswordReset = async (email) => {
   const user = await userRepository.findByEmail(email);
-  if (!user) return; // Khong tiet lo email ton tai hay khong
+  if (!user) return;
   const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phut
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
   await userRepository.savePasswordReset(user.id, token, expiresAt);
-  // TODO: Gui email reset password (tuong tu sendActivationEmail)
 };
 
 const resetPassword = async (token, newPassword) => {

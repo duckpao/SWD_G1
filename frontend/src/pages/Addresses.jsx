@@ -36,7 +36,7 @@ export default function Addresses() {
 
       {showForm && (
         <form onSubmit={submit} style={{ background: "#fff", padding: 20, borderRadius: 12, border: "1px solid #eee", marginBottom: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>{editId ? "Sửa" : "Thêm"} địa chỉ</h3>
+          <h3 style={{ margin: "0 0 16px" }}>{editId ? "Chỉnh sửa" : "Thêm mới"} địa chỉ</h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <input placeholder="Người nhận *" value={form.recipient_name} onChange={(e) => setForm({ ...form, recipient_name: e.target.value })} style={inp} required />
             <input placeholder="Số điện thoại *" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} style={inp} required />
@@ -52,7 +52,7 @@ export default function Addresses() {
             Đặt làm địa chỉ mặc định
           </label>
           <div style={{ display: "flex", gap: 8 }}>
-            <button style={{ padding: "10px 24px", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }}>{editId ? "Cập nhật" : "Thêm"}</button>
+            <button style={{ padding: "10px 24px", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }}>{editId ? "Cập nhật" : "Thêm mới"}</button>
             <button type="button" onClick={() => { setShowForm(false); setEditId(null); }} style={{ padding: "10px 24px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, cursor: "pointer" }}>Hủy</button>
           </div>
         </form>

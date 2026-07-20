@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { products } from "../api";
+import { getProductImage } from "../assets/images";
 import { Search, Star } from "lucide-react";
 
 export default function Products() {

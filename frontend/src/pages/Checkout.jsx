@@ -10,35 +10,36 @@ export default function Checkout() {
   const [err, setErr] = useState("");
 
   useEffect(() => { cartApi.get().then(setCart).catch(() => {}); }, []);
+  useEffect(() => { addrApi.list().then(setAddrs).catch(() => {}); }, []);
+
+  const defaultAddr = addrs.find((a) => a.is_default);
   useEffect(() => {
-    addrApi.list().then((items) => {
-      setAddrs(items);
-      const defaultAddr = items.find((a) => a.is_default);
-      if (!defaultAddr) return;
-      setForm((f) => f.shippingAddress ? f : ({
-        ...f,
-        recipientName: defaultAddr.recipient_name || "",
-        phone: defaultAddr.phone || "",
+    if (defaultAddr && !form.shippingAddress) {
+      setForm((f) => ({
+        ...f, recipientName: defaultAddr.recipient_name || "", phone: defaultAddr.phone || "",
         shippingAddress: [defaultAddr.street_address, defaultAddr.ward, defaultAddr.district, defaultAddr.city].filter(Boolean).join(", "),
       }));
-    }).catch(() => {});
-  }, []);
+    }
+  }, [defaultAddr]);
 
   const submit = async (e) => {
     e.preventDefault();
     if (!form.recipientName || !form.phone || !form.shippingAddress) return setErr("Vui lòng điền đầy đủ thông tin giao hàng!");
+    setErr("");
     try {
-      const body = { ...form };
-      if (form.voucherCode) body.voucherCode = form.voucherCode;
-      if (form.note) body.note = form.note;
+      const body = { ...form, voucherCode: form.voucherCode || undefined, note: form.note || undefined };
       const order = await orderApi.create(body);
-      alert("Đặt hàng thành công! Mã đơn: #" + order.id);
-      nav("/orders/" + order.id);
+
+      if (form.paymentMethod === "VNPay" || form.paymentMethod === "VietQR") {
+        nav("/payment/qr/" + order.id);
+      } else {
+        alert("Đặt hàng thành công! Mã đơn: #" + order.id);
+        nav("/orders/" + order.id);
+      }
     } catch (e) { setErr(e.response?.data?.message || "Đặt hàng thất bại"); }
   };
 
-  const discount = 0;
-  const total = cart.subtotal - discount + (cart.subtotal >= 200000 ? 0 : 15000);
+  const total = cart.subtotal + (cart.subtotal >= 200000 ? 0 : 15000);
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 24, alignItems: "start" }}>
@@ -64,11 +65,15 @@ export default function Checkout() {
         <textarea placeholder="Địa chỉ giao hàng" value={form.shippingAddress} onChange={(e) => setForm({ ...form, shippingAddress: e.target.value })} style={{ ...inp, minHeight: 80 }} required />
 
         <h3 style={{ marginTop: 24 }}>Phương thức thanh toán</h3>
-        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-          {["COD", "VNPay", "BankTransfer"].map((m) => (
-            <label key={m} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", border: form.paymentMethod === m ? "2px solid #2e7d32" : "1px solid #ddd", borderRadius: 8, cursor: "pointer", background: form.paymentMethod === m ? "#e8f5e9" : "#fff" }}>
-              <input type="radio" name="pm" value={m} checked={form.paymentMethod === m} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })} />
-              {m === "COD" ? "Tiền mặt (COD)" : m === "VNPay" ? "VNPay" : "Chuyển khoản"}
+        <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+          {[
+            { id: "COD", label: "Tiền mặt (COD)", icon: "💵" },
+            { id: "VietQR", label: "VietQR - Quét mã", icon: "📱" },
+            { id: "VNPay", label: "VNPay", icon: "🏦" },
+          ].map((m) => (
+            <label key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", border: form.paymentMethod === m.id ? "2px solid #2e7d32" : "1px solid #ddd", borderRadius: 8, cursor: "pointer", background: form.paymentMethod === m.id ? "#e8f5e9" : "#fff" }}>
+              <input type="radio" name="pm" value={m.id} checked={form.paymentMethod === m.id} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })} />
+              {m.icon} {m.label}
             </label>
           ))}
         </div>
@@ -76,7 +81,9 @@ export default function Checkout() {
         <input placeholder="Mã giảm giá (nếu có)" value={form.voucherCode} onChange={(e) => setForm({ ...form, voucherCode: e.target.value })} style={inp} />
         <textarea placeholder="Ghi chú (không bắt buộc)" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} style={{ ...inp, minHeight: 60, marginTop: 12 }} />
 
-        <button style={{ width: "100%", padding: 14, background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: "pointer", marginTop: 20 }}>Đặt hàng</button>
+        <button style={{ width: "100%", padding: 14, background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: "pointer", marginTop: 20 }}>
+          {form.paymentMethod === "COD" ? "Đặt hàng" : "Tiếp tục thanh toán"}
+        </button>
       </form>
 
       <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: 12, padding: 20, position: "sticky", top: 80 }}>
@@ -89,7 +96,7 @@ export default function Checkout() {
         ))}
         <hr style={{ margin: "12px 0", border: "none", borderTop: "1px solid #eee" }} />
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Tạm tính</span><span>{cart.subtotal.toLocaleString()}đ</span></div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Phí ship</span><span>{cart.subtotal >= 200000 ? "FREE" : "15,000đ"}</span></div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Phí ship</span><span>{cart.subtotal >= 200000 ? "Miễn phí" : "15,000đ"}</span></div>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18, fontWeight: "bold", marginTop: 8 }}><span>Tổng</span><span style={{ color: "#2e7d32" }}>{total.toLocaleString()}đ</span></div>
       </div>
     </div>
