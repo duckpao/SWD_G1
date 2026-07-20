@@ -44,7 +44,8 @@ export default function Cart() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {data.items.map((item) => (
               <div key={item.id} style={{ display: "flex", gap: 16, padding: 16, background: "#fff", borderRadius: 12, border: "1px solid #eee", alignItems: "center" }}>
-                <div style={{ width: 64, height: 64, background: "#f0f0f0", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>🍎</div>
+                <div style={{ width: 64, height: 64, background: "#f0f0f0", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+              {(() => { const img = getProductImage({ name: item.product_name, image_url: item.image_url }); return img ? <img src={img} alt={item.product_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 28 }}>🍎</span>; })()}</div>
                 <div style={{ flex: 1 }}>
                   <Link to={"/products/" + item.product_id} style={{ fontWeight: 600, textDecoration: "none", color: "#333" }}>{item.product_name}</Link>
                   {item.variant_name && <span style={{ color: "#666", fontSize: 13, display: "block" }}>{item.variant_name}</span>}
